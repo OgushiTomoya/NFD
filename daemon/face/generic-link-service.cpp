@@ -79,6 +79,7 @@ GenericLinkService::sendLpPacket(lp::Packet&& pkt, const EndpointId& endpointId)
     m_reliability.piggyback(pkt, mtu);
   }
 
+  // std::cout << " allowCongestionMarking=" << m_options.allowCongestionMarking << std::endl; //ohgushi
   if (m_options.allowCongestionMarking) {
     checkCongestionLevel(pkt);
   }
@@ -250,6 +251,7 @@ GenericLinkService::checkCongestionLevel(lp::Packet& pkt)
   }
 
   if (sendQueueLength > 0) {
+    std::cout << time::steady_clock::now() << " : " << sendQueueLength << "\t" << this << std::endl; //ohgushi
     NFD_LOG_FACE_TRACE("txqlen=" << sendQueueLength << " threshold=" <<
                        m_options.defaultCongestionThreshold << " capacity=" <<
                        getTransport()->getSendQueueCapacity());
@@ -258,6 +260,9 @@ GenericLinkService::checkCongestionLevel(lp::Packet& pkt)
   // sendQueue is above target
   if (static_cast<size_t>(sendQueueLength) > m_options.defaultCongestionThreshold) {
     const auto now = time::steady_clock::now();
+    // std::cout << time::steady_clock::now() << "\t" << sendQueueLength << " : sendQueueLength" << std::endl;  //ohgushi
+    // std::cout << time::steady_clock::now() << "\t" << getTransport()->getSendQueueCapacity() << " : capacity" << std::endl;  //ohgushi
+    // std::cout << time::steady_clock::now() << "\t" << getTransport()->getMtu() << " : mtu" << std::endl;  //ohgushi
 
     if (m_nextMarkTime == time::steady_clock::TimePoint::max()) {
       m_nextMarkTime = now + m_options.baseCongestionMarkingInterval;
@@ -267,6 +272,9 @@ GenericLinkService::checkCongestionLevel(lp::Packet& pkt)
       pkt.set<lp::CongestionMarkField>(1);
       ++nCongestionMarked;
       NFD_LOG_FACE_DEBUG("LpPacket was marked as congested");
+      // std::cout << now << " : mark " << std::endl; //ohgushi
+      // std::cout << sendQueueLength << " : sendQueueLength " << std::endl;  //ohgushi
+      // std::cout << " threshold=" << m_options.defaultCongestionThreshold << " capacity=" << getTransport()->getSendQueueCapacity() << std::endl; //ohgushi
 
       ++m_nMarkedSinceInMarkingState;
       // Decrease the marking interval by the inverse of the square root of the number of packets
@@ -274,8 +282,11 @@ GenericLinkService::checkCongestionLevel(lp::Packet& pkt)
       time::nanoseconds interval(static_cast<time::nanoseconds::rep>(
                                    m_options.baseCongestionMarkingInterval.count() /
                                    std::sqrt(m_nMarkedSinceInMarkingState + 1)));
+      std::cout << interval << " : interval " << std::endl; //ohgushi             
       m_nextMarkTime += interval;
     }
+    // std::cout << now << " : now " << std::endl; //ohgushi
+    // std::cout << m_nextMarkTime << " : m_nextMarkTime " << std::endl; //ohgushi
   }
   else if (m_nextMarkTime != time::steady_clock::TimePoint::max()) {
     // Congestion incident has ended, so reset
