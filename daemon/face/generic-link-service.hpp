@@ -139,7 +139,7 @@ public:
      *
      *  The default value (100 ms) is taken from RFC 8289 (CoDel).
      */
-    time::nanoseconds baseCongestionMarkingInterval = 100_ms;
+    time::nanoseconds baseCongestionMarkingInterval = 0_ms;
 
     /** \brief default congestion threshold in bytes
      *
@@ -147,7 +147,8 @@ public:
      *
      *  The default value (64 KiB) works well for a queue capacity of 200 KiB.
      */
-    size_t defaultCongestionThreshold = 65536;
+    // size_t defaultCongestionThreshold = 65536;
+    size_t defaultCongestionThreshold = 1080;
 
     /** \brief enables self-learning forwarding support
      */
