@@ -304,8 +304,41 @@ Forwarder::onIncomingData(const FaceEndpoint& ingress, const Data& data)
     return;
   }
 
+  //dctcp sasaki
+  //fix source code
+  // Name dataName(data.getName());
+  // dataName.append(m_postfix);
+  // dataName.appendVersion();
+
+  auto hit_data = make_shared<Data>();
+
+  hit_data->setName(data.getName());
+  hit_data->setFreshnessPeriod(data.getFreshnessPeriod());
+
+  hit_data->setContent(data.getContent());
+
+  // SignatureInfo signatureInfo(static_cast< ::ndn::tlv::SignatureTypeValue>(255));
+
+  // if (m_keyLocator.size() > 0) {
+  //   signatureInfo.setKeyLocator(m_keyLocator);
+  // }
+
+  hit_data->setSignatureInfo(data.getSignatureInfo());
+
+  ::ndn::EncodingEstimator estimator;
+  ::ndn::EncodingBuffer encoder(estimator.appendVarNumber(0), 0);
+  encoder.appendVarNumber(0);
+  hit_data->setSignatureValue(encoder.getBuffer());
+
+  hit_data->wireEncode();
   // CS insert
-  m_cs.insert(data);
+  m_cs.insert(*hit_data);
+  //dctcp終了
+  
+  //PCON-original-
+  // CS insert
+  // m_cs.insert(data);
+  //PCON-original-終了
 
   // when only one PIT entry is matched, trigger strategy: after receive Data
   if (pitMatches.size() == 1) {
